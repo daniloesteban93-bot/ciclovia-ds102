@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ciclovía Ruta La Chimba — DS102 · GORE RMS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ── Tokens ─────────────────────────────────────────────── */
+:root {
+  --navy:    #1F3864;
+  --teal:    #0D6E7B;
+  --ltbl:    #BDD7EE;
+  --green:   #1B5E20;
+  --grlt:    #E8F5E9;
+  --grmd:    #81C784;
+  --yell:    #E65100;
+  --yellt:   #FFF3E0;
+  --red:     #C62828;
+  --redlt:   #FFEBEE;
+  --blue:    #1565C0;
+  --bllt:    #E3F2FD;
+  --grey:    #546E7A;
+  --xgrey:   #37474F;
+  --bg:      #F4F6F8;
+  --white:   #FFFFFF;
+  --card:    #FFFFFF;
+  --border:  #E0E0E0;
+}
+
+/* ── Reset & base ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--xgrey);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Header ─────────────────────────────────────────────── */
+header {
+  background: var(--navy);
+  color: var(--white);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.header-title { font-size: 17px; font-weight: 700; letter-spacing: 0.01em; }
+.header-sub   { font-size: 11px; color: var(--ltbl); margin-top: 2px; }
+.header-badge {
+  background: var(--teal);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ── Nav tabs ───────────────────────────────────────────── */
+nav {
+  background: #162c52;
+  border-bottom: 2px solid var(--teal);
+}
+.nav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 28px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+.nav-tab {
+  padding: 10px 18px;
+  color: var(--ltbl);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  text-decoration: none;
+  display: block;
+}
+.nav-tab:hover, .nav-tab.active {
+  color: var(--white);
+  border-bottom-color: var(--grmd);
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Main layout ────────────────────────────────────────── */
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 28px 60px;
+}
+
+/* ── Section titles ─────────────────────────────────────── */
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-sub {
+  font-size: 12px;
+  color: var(--grey);
+  margin-bottom: 20px;
+}
+.section { margin-bottom: 48px; scroll-margin-top: 80px; }
+
+/* ── KPI cards ──────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.kpi-card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 18px 16px;
+  border-top: 4px solid var(--teal);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.kpi-card.green  { border-top-color: var(--green); }
+.kpi-card.yellow { border-top-color: var(--yell); }
+.kpi-card.red    { border-top-color: var(--red); }
+.kpi-card.blue   { border-top-color: var(--blue); }
+.kpi-n    { font-size: 32px; font-weight: 800; color: var(--navy); line-height: 1; }
+.kpi-lbl  { font-size: 11px; color: var(--grey); margin-top: 4px; line-height: 1.3; }
+
+/* ── Scenario selector ──────────────────────────────────── */
+.scenario-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.sce-btn {
+  padding: 8px 20px;
+  border-radius: 24px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.sce-btn.a        { background: var(--grlt);  color: var(--green); border-color: var(--grmd); }
+.sce-btn.a.active { background: var(--green); color: var(--white); }
+.sce-btn.c        { background: var(--bllt);  color: var(--blue);  border-color: #90CAF9; }
+.sce-btn.c.active { background: var(--blue);  color: var(--white); }
+.sce-btn.b        { background: var(--redlt); color: var(--red);   border-color: #EF9A9A; }
+.sce-btn.b.active { background: var(--red);   color: var(--white); }
+
+/* ── Tramo cards ────────────────────────────────────────── */
+.tramo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.tramo-card {
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  overflow: hidden;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.tramo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+}
+.tramo-head {
+  padding: 14px 16px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.tramo-head.green  { background: var(--green); color: var(--white); }
+.tramo-head.yellow { background: var(--yell);  color: var(--white); }
+.tramo-head.red    { background: var(--red);   color: var(--white); }
+.tramo-head.grey   { background: var(--grey);  color: var(--white); }
+.tramo-id   { font-size: 22px; font-weight: 800; }
+.tramo-name { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+.tramo-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.25);
+}
+.tramo-body { padding: 14px 16px; }
+.tramo-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.stat-item { text-align: center; }
+.stat-n   { font-size: 20px; font-weight: 800; color: var(--navy); }
+.stat-lbl { font-size: 10px; color: var(--grey); }
+
+/* Barra de palmeras */
+.palm-bar-wrap { margin-bottom: 12px; }
+.palm-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--grey);
+  margin-bottom: 4px;
+}
+.palm-bar-track {
+  height: 10px;
+  background: var(--redlt);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.palm-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 5px;
+  transition: width 0.6s ease;
+}
+
+/* Scenario data */
+.sce-data { display: none; }
+.sce-data.active { display: block; }
+.sce-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.sce-row:last-child { border-bottom: none; }
+.sce-key   { color: var(--grey); }
+.sce-val   { font-weight: 600; color: var(--navy); }
+.sce-val.bad  { color: var(--red); }
+.sce-val.warn { color: var(--yell); }
+.sce-val.good { color: var(--green); }
+
+.mix-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--teal);
+  font-size: 11.5px;
+  color: var(--xgrey);
+  line-height: 1.5;
+}
+.mix-box strong { color: var(--navy); }
+
+/* ── Tabla comparativa ──────────────────────────────────── */
+.comp-table-wrap { overflow-x: auto; }
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  background: var(--card);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+.comp-table th {
+  padding: 10px 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.comp-table td {
+  padding: 11px 14px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+.comp-table td:first-child { text-align: left; font-weight: 600; }
+.comp-table tr:nth-child(even) td { background: var(--bg); }
+.th-nav  { background: var(--navy); color: var(--white); }
+.th-a    { background: var(--green); color: var(--white); }
+.th-c    { background: var(--blue);  color: var(--white); }
+.th-b    { background: var(--red);   color: var(--white); }
+.cell-good { color: var(--green); font-weight: 700; }
+.cell-warn { color: var(--yell);  font-weight: 700; }
+.cell-bad  { color: var(--red);   font-weight: 700; }
+.cell-na   { color: var(--grey);  font-style: italic; }
+
+/* ── Charts ─────────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width:700px){ .charts-grid { grid-template-columns: 1fr; } }
+.chart-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+.chart-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 14px;
+}
+
+/* ── Metodología ────────────────────────────────────────── */
+.metodologia-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+.met-card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  border-top: 3px solid var(--teal);
+}
+.met-n    { font-size: 28px; font-weight: 800; color: var(--teal); }
+.met-title{ font-size: 13px; font-weight: 700; color: var(--navy); margin: 4px 0; }
+.met-desc { font-size: 12px; color: var(--grey); }
+
+/* Criterios */
+.crit-cards {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+@media(max-width:700px){ .crit-cards { grid-template-columns: 1fr; } }
+.crit-card {
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.crit-card.a { background: var(--grlt); border-left: 5px solid var(--green); }
+.crit-card.c { background: var(--bllt); border-left: 5px solid var(--blue); }
+.crit-card.b { background: var(--redlt); border-left: 5px solid var(--red); }
+.crit-lbl  { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing:.06em; margin-bottom:6px; }
+.crit-card.a .crit-lbl { color: var(--green); }
+.crit-card.c .crit-lbl { color: var(--blue); }
+.crit-card.b .crit-lbl { color: var(--red); }
+.crit-title{ font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom:6px; }
+.crit-desc { font-size: 12px; color: var(--xgrey); }
+.crit-tag  {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+.crit-card.a .crit-tag { background: var(--green); color: var(--white); }
+.crit-card.c .crit-tag { background: var(--blue);  color: var(--white); }
+.crit-card.b .crit-tag { background: var(--red);   color: var(--white); }
+
+/* ── Footer ─────────────────────────────────────────────── */
+footer {
+  background: var(--navy);
+  color: var(--ltbl);
+  text-align: center;
+  padding: 20px;
+  font-size: 11px;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-title">🌴 Ciclovía Ruta La Chimba — DS102</div>
+      <div class="header-sub">GORE RMS · División de Infraestructura y Transportes · Av. Domingo Santa María</div>
+    </div>
+    <div class="header-badge">Avance pre-informe especialistas</div>
+  </div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-tab active" href="#resumen">Resumen</a>
+    <a class="nav-tab" href="#escenarios">Escenarios por tramo</a>
+    <a class="nav-tab" href="#comparativo">Comparativo</a>
+    <a class="nav-tab" href="#graficos">Gráficos</a>
+    <a class="nav-tab" href="#metodologia">Metodología</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ── RESUMEN ────────────────────────────────────────────── -->
+<section class="section" id="resumen">
+  <div class="section-title">📊 Resumen del proyecto</div>
+  <div class="section-sub">Universo analizado: Tramos 1, 2, 3, 4 y 7 · Solo Phoenix canariensis · Criterio recomendado: A (30 cm)</div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-n">133</div>
+      <div class="kpi-lbl">Palmeras analizadas<br>T1–T4 y T7</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-n">5</div>
+      <div class="kpi-lbl">Tramos con cotas<br>registradas</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-n">114</div>
+      <div class="kpi-lbl">Palmeras conservadas<br>bajo Crit. A (86%)</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-n">~19</div>
+      <div class="kpi-lbl">Retiros para ≥1,2 m<br>Criterio A</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-n">90</div>
+      <div class="kpi-lbl">Afectados Criterio B<br>(68% — binario)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-n">1.090 m</div>
+      <div class="kpi-lbl">Longitud total<br>con palmeras</div>
+    </div>
+  </div>
+
+  <div class="crit-cards">
+    <div class="crit-card a">
+      <div class="crit-lbl">Criterio A</div>
+      <div class="crit-title">30 cm del tronco</div>
+      <div class="crit-desc">Plataforma elevada que vuela sobre zona crítica de raíces. Sin contacto con suelo. Las cotas del plano ya incorporan este buffer. Resultado <strong>GRADADO</strong>.</div>
+      <span class="crit-tag">✅ RECOMENDADO</span>
+    </div>
+    <div class="crit-card c">
+      <div class="crit-lbl">Criterio C</div>
+      <div class="crit-title">50 cm del tronco</div>
+      <div class="crit-desc">Mismo sistema constructivo. Buffer de 50 cm (cota − 0,20 m). Escenario hipotético de sensibilidad. Resultado <strong>GRADADO</strong>.</div>
+      <span class="crit-tag">⚠️ HIPOTÉTICO</span>
+    </div>
+    <div class="crit-card b">
+      <div class="crit-lbl">Criterio B</div>
+      <div class="crit-title">80 cm del tronco</div>
+      <div class="crit-desc">Nivel de suelo. Criterio especialista paisajista. Resultado <strong>BINARIO</strong>: afecta / no afecta ciclovía 1,2 m fija. Cota − 0,50 m.</div>
+      <span class="crit-tag">❌ NO RECOMENDADO</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── ESCENARIOS POR TRAMO ──────────────────────────────── -->
+<section class="section" id="escenarios">
+  <div class="section-title">🗺️ Escenarios por tramo</div>
+  <div class="section-sub">Selecciona un criterio para ver el impacto sobre cada tramo</div>
+
+  <div class="scenario-bar">
+    <button class="sce-btn a active" onclick="setCriterio('a')">Criterio A — 30 cm</button>
+    <button class="sce-btn c"        onclick="setCriterio('c')">Criterio C — 50 cm</button>
+    <button class="sce-btn b"        onclick="setCriterio('b')">Criterio B — 80 cm</button>
+  </div>
+
+  <div class="tramo-grid" id="tramo-grid">
+    <!-- Generado por JS -->
+  </div>
+</section>
+
+<!-- ── COMPARATIVO ────────────────────────────────────────── -->
+<section class="section" id="comparativo">
+  <div class="section-title">📋 Tabla comparativa — todos los tramos</div>
+  <div class="section-sub">Retiros necesarios y palmeras conservadas según criterio de distanciamiento</div>
+
+  <div class="comp-table-wrap">
+    <table class="comp-table">
+      <thead>
+        <tr>
+          <th class="th-nav" rowspan="2">Tramo / Sector</th>
+          <th class="th-nav" rowspan="2">N°<br>indiv.</th>
+          <th class="th-nav" rowspan="2">Long.<br>palm.</th>
+          <th class="th-a" colspan="3">Criterio A — 30 cm ✅</th>
+          <th class="th-c" colspan="2">Criterio C — 50 cm ⚠️</th>
+          <th class="th-b" colspan="2">Criterio B — 80 cm ❌</th>
+        </tr>
+        <tr>
+          <th class="th-a">Retiros ≥1,2m</th>
+          <th class="th-a">Ancho mín.</th>
+          <th class="th-a">Conservadas</th>
+          <th class="th-c">Retiros ≥1,2m</th>
+          <th class="th-c">Conservadas</th>
+          <th class="th-b">Afectados</th>
+          <th class="th-b">Retiros equiv.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>T1</strong> — Dorsal–Caupolicán</td>
+          <td>28</td><td>305 m</td>
+          <td class="cell-good">0</td>
+          <td class="cell-good">1,32 m</td>
+          <td class="cell-good">28/28 (100%)</td>
+          <td class="cell-warn">2</td>
+          <td class="cell-warn">26/28 (93%)</td>
+          <td class="cell-good">0 (0%)</td>
+          <td class="cell-good">0</td>
+        </tr>
+        <tr>
+          <td><strong>T2</strong> — Caupolicán–Maruri</td>
+          <td>32</td><td>350 m</td>
+          <td class="cell-warn">10</td>
+          <td class="cell-warn">0,98 m</td>
+          <td class="cell-warn">22/32 (69%)</td>
+          <td class="cell-bad">~26 ⚠</td>
+          <td class="cell-bad">6/32 (19%)</td>
+          <td class="cell-bad">31 (97%)</td>
+          <td class="cell-bad">~31</td>
+        </tr>
+        <tr>
+          <td><strong>T3</strong> — Maruri–Apóstol Stgo.</td>
+          <td>7</td><td>80 m</td>
+          <td class="cell-warn">3</td>
+          <td class="cell-warn">0,90 m</td>
+          <td class="cell-warn">4/7 (57%)</td>
+          <td class="cell-bad">5</td>
+          <td class="cell-bad">1/7 (14%)</td>
+          <td class="cell-bad">7 (100%)</td>
+          <td class="cell-bad">7</td>
+        </tr>
+        <tr>
+          <td><strong>T4</strong> — Apóstol Stgo.–Los Maquis</td>
+          <td>30</td><td>307 m</td>
+          <td class="cell-good">2</td>
+          <td class="cell-good">1,11 m</td>
+          <td class="cell-good">28/30 (93%)</td>
+          <td class="cell-warn">4</td>
+          <td class="cell-warn">26/30 (87%)</td>
+          <td class="cell-warn">16 (53%)</td>
+          <td class="cell-warn">16</td>
+        </tr>
+        <tr>
+          <td><strong>T7</strong> — Ruta 5–Las Cañas (Indep.)</td>
+          <td>36</td><td>348 m</td>
+          <td class="cell-warn">4</td>
+          <td class="cell-warn">0,86 m Norte</td>
+          <td class="cell-good">32/36 (89%)</td>
+          <td class="cell-bad">~32 ⚠</td>
+          <td class="cell-bad">4/36 (11%)</td>
+          <td class="cell-bad">36 (100%)</td>
+          <td class="cell-bad">36</td>
+        </tr>
+        <tr>
+          <td><strong>T5</strong> — Sin palmeras</td>
+          <td class="cell-na">—</td><td class="cell-na">—</td>
+          <td class="cell-na" colspan="3">No aplica — ciclovía bidireccional por calzada</td>
+          <td class="cell-na" colspan="2">—</td>
+          <td class="cell-na" colspan="2">—</td>
+        </tr>
+        <tr>
+          <td><strong>T6</strong> — Pendiente análisis</td>
+          <td class="cell-na">~36</td><td class="cell-na">—</td>
+          <td class="cell-bad" colspan="3">Requiere estudio específico con especialistas</td>
+          <td class="cell-bad" colspan="2">Pendiente</td>
+          <td class="cell-bad" colspan="2">Pendiente</td>
+        </tr>
+        <tr style="background:#E8F5E9; font-weight:700;">
+          <td><strong>TOTAL T1–T4 y T7</strong></td>
+          <td><strong>133</strong></td><td><strong>1.090 m</strong></td>
+          <td class="cell-good"><strong>~19</strong></td>
+          <td class="cell-good"><strong>≥1,2 m todos</strong></td>
+          <td class="cell-good"><strong>114/133 (86%)</strong></td>
+          <td class="cell-bad"><strong>~69</strong></td>
+          <td class="cell-bad"><strong>62/133 (47%)</strong></td>
+          <td class="cell-bad"><strong>90 (68%)</strong></td>
+          <td class="cell-bad"><strong>~90</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── GRÁFICOS ────────────────────────────────────────────── -->
+<section class="section" id="graficos">
+  <div class="section-title">📈 Gráficos comparativos</div>
+  <div class="section-sub">Visualización del impacto por escenario y tramo</div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Palmeras conservadas vs. retiradas por tramo — Criterio A</div>
+      <canvas id="chartBarTramos" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Afectación total por criterio (133 palmeras)</div>
+      <canvas id="chartCriterios" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Retiros necesarios para ≥1,2 m por criterio y tramo</div>
+      <canvas id="chartRetiros" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Distribución de anchos disponibles — Criterio A (30 cm)</div>
+      <canvas id="chartDistribucion" height="220"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── METODOLOGÍA ────────────────────────────────────────── -->
+<section class="section" id="metodologia">
+  <div class="section-title">⚙️ Metodología del análisis</div>
+  <div class="section-sub">Lógica de medición y variables consideradas</div>
+
+  <div class="metodologia-grid">
+    <div class="met-card">
+      <div class="met-n">1</div>
+      <div class="met-title">Calzada mínima</div>
+      <div class="met-desc">6,5 m por sentido mantenidos como límite fijo de proyecto. Norma mínima para 2 pistas de circulación.</div>
+    </div>
+    <div class="met-card">
+      <div class="met-n">2</div>
+      <div class="met-title">Espacio disponible</div>
+      <div class="met-desc">Distancia resultante entre el borde de la calzada (6,5 m) y el borde del tronco de cada palmera, según cotas del plano CAD.</div>
+    </div>
+    <div class="met-card">
+      <div class="met-n">3</div>
+      <div class="met-title">Buffer al tronco</div>
+      <div class="met-desc">Distancia de seguridad evaluada: 30 cm (Crit. A), 50 cm (Crit. C) y 80 cm (Crit. B). Las cotas del plano ya incorporan el buffer de 30 cm.</div>
+    </div>
+    <div class="met-card">
+      <div class="met-n">4</div>
+      <div class="met-title">Ancho de ciclovía</div>
+      <div class="met-desc">Ancho resultante disponible. Meta: ≥1,5 m (óptimo) o ≥1,2 m (singularidad tolerable). Menor a 1,2 m: fuera de estándar.</div>
+    </div>
+    <div class="met-card">
+      <div class="met-n">5</div>
+      <div class="met-title">Plataforma elevada</div>
+      <div class="met-desc">Solución constructiva que vuela sobre la zona crítica de raíces. Sin contacto con el suelo. Elimina el daño radicular como restricción.</div>
+    </div>
+    <div class="met-card">
+      <div class="met-n">6</div>
+      <div class="met-title">Phoenix canariensis</div>
+      <div class="met-desc">Palmera monocotiledónea sin crecimiento secundario. El tronco no se expande con la edad, lo que permite acercamientos controlados sin daño estructural.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Gobierno Regional Metropolitano de Santiago · División de Infraestructura y Transportes · DS102 — Ciclovía Ruta La Chimba · Avance pre-informe de especialistas
+</footer>
+
+<script>
+// ── Datos ─────────────────────────────────────────────────────
+const TRAMOS = [
+  {
+    id:"T1", sector:"Dorsal – Caupolicán", comuna:"Renca",
+    lp:"305 m", lt:"436 m", n:28, color:"green", badge:"✅ Óptimo",
+    a:{ ret12:"0",  ancho:"1,32 m", cons:28, pct:100, mix:"Criterio A sin retiros. Ciclovía ≥1,2 m íntegra con singularidades tolerables en P18 y P28 (1,32 m). Único tramo sin afectaciones bajo los 3 criterios." },
+    c:{ ret12:"2",  ancho:"1,12 m", cons:26, pct:93,  mix:"2 retiros (P18 Sur 1,12 m / P28 Sur 1,12 m). Para ≥1,4 m: ~12 retiros. La restricción pasa al lado Sur de varios individuos." },
+    b:{ ret12:"—",  ancho:"—",      cons:28, pct:100, mix:"0 individuos con nube magenta. Todos mantienen >80 cm libre bajo la lógica binaria. Tramo viable bajo los 3 criterios." },
+  },
+  {
+    id:"T2", sector:"Caupolicán – Maruri", comuna:"Renca",
+    lp:"350 m", lt:"420 m", n:32, color:"yellow", badge:"⚠️ Con retiros",
+    a:{ ret12:"10", ancho:"0,98 m", cons:22, pct:69,  mix:"10 retiros selectivos en lado Sur. Mínimo viable: 5 retiros → ciclovía ~1,11 m. Estándar ≥1,2 m: 10 retiros. Tramo más restrictivo del proyecto." },
+    c:{ ret12:"~26",ancho:"0,78 m", cons:6,  pct:19,  mix:"~26 retiros — tramo prácticamente inviable. Solo 6 individuos mantienen ≥1,2 m. Criterio C hace inviable este sector." },
+    b:{ ret12:"~31",ancho:"—",      cons:1,  pct:3,   mix:"31 de 32 individuos afectados (97%). Solo P29 no está comprometido. Requiere eliminar prácticamente todo el tramo." },
+  },
+  {
+    id:"T3", sector:"Maruri – Apóstol Stgo.", comuna:"Renca",
+    lp:"80 m", lt:"175 m", n:7, color:"yellow", badge:"⚠️ Con 3 retiros",
+    a:{ ret12:"3",  ancho:"0,90 m", cons:4,  pct:57,  mix:"3 retiros: P61 (obligatorio) + P62 + P63. 4 individuos quedan viables (1,16–1,85 m). Singularidad tolerable en P64 (1,16 m)." },
+    c:{ ret12:"5",  ancho:"0,70 m", cons:1,  pct:14,  mix:"5 retiros de 6 activos. Solo P67 (1,65 m) queda viable. Tramo prácticamente inviable como ciclovía continua bajo Criterio C." },
+    b:{ ret12:"7",  ancho:"—",      cons:0,  pct:0,   mix:"7 de 7 individuos afectados (100%). Incluyendo P67 que tiene 1,85 m bajo Criterio A. Retiro total de todas las palmeras del tramo." },
+  },
+  {
+    id:"T4", sector:"Apóstol Stgo. – Los Maquis", comuna:"Renca",
+    lp:"307 m", lt:"523 m", n:30, color:"green", badge:"✅ Con 2 retiros",
+    a:{ ret12:"2",  ancho:"1,11 m", cons:28, pct:93,  mix:"2 retiros: P97 (obligatorio geom.) + P78 (Norte 1,11 m). Tramo íntegro ≥1,2 m. Singularidad tolerable en P90 Sur (1,21 m)." },
+    c:{ ret12:"4",  ancho:"0,91 m", cons:26, pct:87,  mix:"4 retiros: P97 + P78 (Norte 0,91 m) + P90 (Sur 1,01 m) + P96 (Sur 1,09 m). Tramo sigue viable con intervención acotada." },
+    b:{ ret12:"16", ancho:"—",      cons:14, pct:47,  mix:"16 de 30 afectados (53%). Concentrados en P68–P79 (diámetros 1,3–1,4 m). Impacto patrimonial significativo bajo Criterio B." },
+  },
+  {
+    id:"T7", sector:"Ruta 5 – Las Cañas", comuna:"Independencia",
+    lp:"348 m", lt:"553 m", n:36, color:"yellow", badge:"⚠️ Norte restrictivo",
+    a:{ ret12:"4",  ancho:"0,86 m Norte\n≥1,2 m Sur", cons:32, pct:89, mix:"4 retiros puntuales en Norte: FeCa172/175/176/195. Norte: singularidades ~1,01 m. Sur íntegro ≥1,2 m sin intervención." },
+    c:{ ret12:"~32",ancho:"0,66 m", cons:4,  pct:11,  mix:"~32 retiros — tramo inviable. La restricción Norte se generaliza. Geometría de mediana (3 m) solo compatible con buffer de 30 cm." },
+    b:{ ret12:"36", ancho:"—",      cons:0,  pct:0,   mix:"36 de 36 afectados (100%). Mediana de 3 m + alcorque 1 m no tiene margen para 80 cm + ciclovía 1,2 m. Sin plataforma elevada, inviable." },
+  },
+  {
+    id:"T5", sector:"Sin palmeras (bidireccional)", comuna:"Renca",
+    lp:"—", lt:"—", n:0, color:"grey", badge:"ℹ️ No aplica",
+    a:{ ret12:"—", ancho:"—", cons:0, pct:100, mix:"Ciclovía bidireccional por calzada. Sin mediana — no aplica análisis de distanciamiento arboricultural." },
+    c:{ ret12:"—", ancho:"—", cons:0, pct:100, mix:"No aplica." },
+    b:{ ret12:"—", ancho:"—", cons:0, pct:100, mix:"No aplica." },
+  },
+  {
+    id:"T6", sector:"Pendiente estudio", comuna:"Renca",
+    lp:"—", lt:"—", n:"~36", color:"red", badge:"🔴 Análisis pendiente",
+    a:{ ret12:"—", ancho:"—", cons:0, pct:0, mix:"Mediana 2–2,5 m con especies mixtas y palmeras fuera de eje. Requiere estudio específico con especialistas. Posible alternancia unidireccional/bidireccional." },
+    c:{ ret12:"—", ancho:"—", cons:0, pct:0, mix:"Pendiente estudio con especialistas." },
+    b:{ ret12:"—", ancho:"—", cons:0, pct:0, mix:"Pendiente estudio con especialistas." },
+  },
+];
+
+let criterioActivo = 'a';
+
+// ── Render tarjetas ───────────────────────────────────────────
+function renderTramos() {
+  const grid = document.getElementById('tramo-grid');
+  grid.innerHTML = TRAMOS.map(t => {
+    const d = t[criterioActivo];
+    const isNA = t.id === 'T5' || t.id === 'T6';
+    const pct = isNA ? 100 : d.pct;
+    const cons = isNA ? '—' : `${d.cons}/${t.n}`;
+    return `
+    <div class="tramo-card">
+      <div class="tramo-head ${t.color}">
+        <div>
+          <div class="tramo-id">${t.id}</div>
+          <div class="tramo-name">${t.sector}<br><small>${t.comuna}</small></div>
+        </div>
+        <div class="tramo-badge">${t.badge}</div>
+      </div>
+      <div class="tramo-body">
+        <div class="tramo-stats">
+          <div class="stat-item">
+            <div class="stat-n">${t.n}</div>
+            <div class="stat-lbl">Individuos</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-n">${t.lp}</div>
+            <div class="stat-lbl">Long. palm.</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-n">${d.ret12}</div>
+            <div class="stat-lbl">Retiros p/≥1,2m</div>
+          </div>
+        </div>
+
+        ${!isNA ? `
+        <div class="palm-bar-wrap">
+          <div class="palm-bar-label">
+            <span>Conservadas: ${cons} (${pct}%)</span>
+            <span style="color:var(--red)">Retiradas: ${typeof t.n==='number'?t.n-d.cons:0}</span>
+          </div>
+          <div class="palm-bar-track">
+            <div class="palm-bar-fill" style="width:${pct}%"></div>
+          </div>
+        </div>` : ''}
+
+        <div class="sce-row">
+          <span class="sce-key">Ancho mínimo disponible</span>
+          <span class="sce-val ${d.ancho==='—'?'':'warn'}">${d.ancho}</span>
+        </div>
+        <div class="sce-row">
+          <span class="sce-key">Longitud total del tramo</span>
+          <span class="sce-val">${t.lt}</span>
+        </div>
+
+        <div class="mix-box"><strong>Observación:</strong> ${d.mix}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setCriterio(c) {
+  criterioActivo = c;
+  document.querySelectorAll('.sce-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.sce-btn.${c}`).classList.add('active');
+  renderTramos();
+}
+
+renderTramos();
+
+// ── Nav activo ────────────────────────────────────────────────
+const sections = document.querySelectorAll('.section');
+const navTabs  = document.querySelectorAll('.nav-tab');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navTabs.forEach(t => {
+    t.classList.toggle('active', t.getAttribute('href') === '#'+current);
+  });
+});
+
+// ── Chart 1: barras apiladas por tramo ────────────────────────
+new Chart(document.getElementById('chartBarTramos'), {
+  type: 'bar',
+  data: {
+    labels: ['T1 (28)','T2 (32)','T3 (7)','T4 (30)','T7 (36)'],
+    datasets: [
+      { label:'Conservadas', data:[28,22,4,28,32], backgroundColor:'#2E7D32' },
+      { label:'Retiradas',   data:[0, 10,3, 2, 4],  backgroundColor:'#C62828' },
+    ]
+  },
+  options: {
+    responsive:true, plugins:{ legend:{position:'bottom'} },
+    scales: { x:{stacked:true}, y:{stacked:true, max:40} }
+  }
+});
+
+// ── Chart 2: barras criterios ─────────────────────────────────
+new Chart(document.getElementById('chartCriterios'), {
+  type: 'bar',
+  data: {
+    labels: ['Crit. A (30 cm)','Crit. C (50 cm)','Crit. B (80 cm)'],
+    datasets: [
+      { label:'Conservadas / no afectadas', data:[114,62,43], backgroundColor:['#2E7D32','#1565C0','#9E9E9E'] },
+      { label:'Retiradas / afectadas',       data:[19, 71,90], backgroundColor:['#C62828','#C62828','#C62828'] },
+    ]
+  },
+  options: {
+    responsive:true, plugins:{ legend:{position:'bottom'} },
+    scales: { x:{stacked:true}, y:{stacked:true, max:133} }
+  }
+});
+
+// ── Chart 3: retiros por tramo y criterio ─────────────────────
+new Chart(document.getElementById('chartRetiros'), {
+  type: 'bar',
+  data: {
+    labels: ['T1','T2','T3','T4','T7'],
+    datasets: [
+      { label:'Crit. A (30 cm)', data:[0,10,3,2,4],   backgroundColor:'#2E7D32' },
+      { label:'Crit. C (50 cm)', data:[2,26,5,4,32],  backgroundColor:'#1565C0' },
+      { label:'Crit. B (80 cm)', data:[0,31,7,16,36], backgroundColor:'#C62828' },
+    ]
+  },
+  options: {
+    responsive:true, plugins:{ legend:{position:'bottom'} },
+    scales: { y:{ beginAtZero:true } }
+  }
+});
+
+// ── Chart 4: distribución anchos ──────────────────────────────
+new Chart(document.getElementById('chartDistribucion'), {
+  type: 'doughnut',
+  data: {
+    labels: ['≥1,5 m (óptimo)','1,2–1,5 m (singular)','<1,2 m (fuera estándar)','Retiro obligatorio'],
+    datasets:[{ data:[23,94,16,3],
+      backgroundColor:['#2E7D32','#F57F17','#C62828','#BDBDBD'],
+      borderWidth:2, borderColor:'#fff'
+    }]
+  },
+  options: {
+    responsive:true,
+    plugins:{
+      legend:{ position:'bottom', labels:{ font:{size:11} } },
+      tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw} ind.` } }
+    }
+  }
+});
+</script>
+</body>
+</html>
